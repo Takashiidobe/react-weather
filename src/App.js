@@ -2,65 +2,88 @@ import React, { Component } from 'react';
 import './App.css';
 
 // rehash the freecodecamp app in react
-
-const output = document.getElementById('output');
-
-const getLocation = () => {
-  if (!navigator.geolocation) {
-    output.innerHTML = `<p>Geolocation isn't supported</p>`;
-    return;
-  };
-const success = (pos) => {
-  const long = pos.coords.longitude;
-  const lat = pos.coords.latitude;
-  const timestamp = pos.timestamp;
-  const date = new Date(timestamp);
-  console.log(long, lat, timestamp, date);
-};
-const error = () =>{
-  return;
-}
-navigator.geolocation.getCurrentPosition(success, error);
-}
-
-
-const API = `https://fcc-weather-api.glitch.me/api/current?`
-const LON_PARAM = `lon=`;
-const LON = `40.8136`;
-const LAT_PARAM = `&lat=`;
-const LAT = `-96.7026`;
-
-
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      temp: 0
-    }
+      temp: undefined,
+      longitude: undefined,
+      latitude: undefined,
+      time: undefined,
+      sunrise: undefined,
+      sunset: undefined,
+      error: null,
+    };
+
+    this.getLocation = this.getLocation.bind(this);
+    this.getTemp = this.getTemp.bind(this);
   }
 
-  ComponentDidMount() {
-    
-    fetch(API + LON_PARAM + LON + LAT_PARAM + LAT)
-    .then(response => response.json())
-    .then(data => console.log(data));
+  getLocation() {
+    navigator.geolocation.getCurrentPosition (
+      (position) => {
+        this.setState({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          error: null,
+        });
+      },
+      (error) => this.setState({ error: error.message }),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+    )
   }
+
+  getTemp() {
+    const request = new XMLHttpRequest();
+    request.open('GET', `https://fcc-weather-api.glitch.me/api/current?lat=${this.state.latitude}&lon=${this.state.longitude}`, true);
+
+      request.onload = () => {
+        if (request.status >= 200 && request.status < 400) {
+          // Success!
+          const data = JSON.parse(request.responseText);
+          console.log(data);
+          this.setState({ 
+            temp: data.main.temp,
+            time: data.dt,
+            sunrise: data.sys.sunrise,
+            sunset: data.sys.sunset
+          });
+        } else {
+          // We reached our target server, but it returned an error
+
+        }
+      };
+
+      request.onerror = () => {
+        // There was a connection error of some sort
+      }
+      request.send();
+  }
+
   render() {
     return (
       <div className="App">
         <h3>FreeCodeCamp Weather App</h3>
         <p>Press the button to get your weather</p>
-        <button>Press Me</button>
-        <div onClick={getLocation} id="output"></div>
+        <button onClick={this.getLocation}>Press Me</button>
+        <button onClick={this.getTemp}>Press Me too!</button>
+        <div id="output">
+          {this.state.latitude} 
+          <br />
+          {this.state.longitude} 
+          <br />
+          {this.state.temp} 
+          <br />
+          {this.state.time}
+          <br />
+          {this.state.sunrise}
+          <br />
+          {this.state.sunset}
+        </div>
       </div>
     );
   }
 }
-
-
-
-
-
 
 export default App;
 
