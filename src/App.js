@@ -30,7 +30,7 @@ class App extends Component {
     this.logState = this.logState.bind(this);
   }
 
-  componentDidMount() {
+  componentWillMount() {
     navigator.geolocation
       .getCurrentPosition(
         position => {
@@ -95,14 +95,23 @@ class App extends Component {
             {this.state.longitude &&
               `Your Longitude is: ${this.state.longitude}`}
             <br />
-
-            <ul>
               {
-                this.state.weather.map((item, i) => {
-                  <li key={i}>{item}</li>
-                })
+                (this.state.weather.length > 1) ?
+                  <ul>
+                    {
+                      this.state.weather.map(((items, index) => 
+                        <li key={index}>
+                          Time: {items.dt_txt}
+                          Temperature: {((items.main.temp - 273.15) * 1.8) + 32}
+                          Humidity: {items.main.humidity}
+                          Weather: {items.weather[0].main}
+                          Wind: {items.wind.speed}
+                        </li>
+                      ))
+                    }
+                  </ul>
+                  : null
               }
-            </ul>
           </div>
         </div>
       </div>
